@@ -19,6 +19,7 @@ public class Launcher {
             if (res.equals("quit"))
                 break;
             else if (res.equals("fibo")) {
+                System.out.println("Entrez un nombre:");
                 res = scan.nextLine();
                 int resFibo = fibo(parseInt(res));
                 System.out.println(resFibo);
