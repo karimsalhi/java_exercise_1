@@ -1,34 +1,87 @@
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 
-import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
-
 public class Predict implements Command {
+    private static class Word {
+        private final String word;
+        private final Map<String, Integer> occurences = new HashMap<>();
+
+        public void putFollower(String w) {
+            this.occurences.put(w, this.occurences.getOrDefault(w, 0) + 1);
+        }
+
+        public Word(String word) {
+            this.word = word;
+        }
+
+        public String predict() {
+            if (occurences.isEmpty())
+                return null;
+
+            int i = Collections.max(occurences.values());
+
+            List<String> list = this.occurences.keySet().stream().filter(k -> occurences.get(k).equals(i)).toList();
+
+            return list.get(0);
+        }
+    }
+
     @Override
     public String name() {
         return "predict";
     }
 
     @Override
-    public boolean run(Scanner scanner) {
+    public boolean run(Scanner sc) {
         System.out.println("Entrez le chemin vers un fichier:");
-        String msg = scanner.nextLine();
-        Path path = Paths.get(msg);
-
+        String content;
         try {
-            String content = java.nio.file.Files.readString(path);
-            System.out.println("Entrez un mot:");
+            content = Files.readString(Path.of(sc.nextLine()));
+        } catch (Exception e) {
+            System.err.println("Unreadable file: " + e.getMessage());
+            return false;
+        }
 
-            String str = scanner.nextLine();
-            if (!content.contains(str)) {
-                System.out.println("Le mot n'existe pas dans le fichier");
+
+        if (content.isBlank())
+            return false;
+
+        content = content.toLowerCase();
+        content = content.replaceAll("[,.!?\\-'\"\t\n]", " ");
+        content = content.replaceAll(" {2}", " ");
+
+        Map<String, Word> words = new HashMap<>();
+
+        String lastWord = Arrays.stream(content.split(" "))
+                .filter(s -> !s.isBlank())
+                .reduce("", (prev, next) -> {
+                    if (!prev.isBlank()) {
+                        words.putIfAbsent(prev, new Word(prev));
+                        words.get(prev).putFollower(next);
+                    }
+                    return next;
+                });
+
+        words.putIfAbsent(lastWord, new Word(lastWord));
+
+        System.out.println("Entrez un mot:");
+        String startWord = sc.nextLine();
+        startWord = startWord.toLowerCase();
+
+        if (!words.containsKey(startWord))
+            System.err.println("Le mot n'existe pas dans le fichier");
+
+        else {
+            List<String> sentence = new ArrayList<>(List.of(startWord));
+            while (sentence.size() < 20) {
+                String nextWord = words.get(sentence.get(sentence.size() - 1)).predict();
+                if (nextWord == null)
+                    break;
+                sentence.add(nextWord);
             }
 
-        } catch (Exception e) {
-            System.out.println("Unreadable file: " + e.toString());
+            System.out.println(String.join(" ", sentence));
         }
 
         return false;
