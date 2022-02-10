@@ -15,10 +15,12 @@ public class Launcher {
         Fibo fibo = new Fibo();
         Quit quit = new Quit();
         Freq freq = new Freq();
+        Predict predict = new Predict();
         List<Command> commands = new ArrayList<>();
         commands.add(fibo);
         commands.add(quit);
         commands.add(freq);
+        commands.add(predict);
 
         boolean stop = false;
         boolean runned = false;
