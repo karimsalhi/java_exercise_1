@@ -9,74 +9,31 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toMap;
 
 public class Launcher {
-    public static void handleFreq(Path path) {
-        /*try {
-            String file = java.nio.file.Files.readString(path);
-            return true;
-        } catch (Exception e) {
-            System.out.println("Unreadable file: " + e);
-            return false;
-        }*/
-
-        try {
-            String content = java.nio.file.Files.readString(path);
-            content = content.toLowerCase(Locale.ROOT);
-            String[] words = content.split(" ");
-            List<String> list = Arrays.asList(words);
-            Map<Object, Integer> frequencyMap = list.stream()
-                    .collect(toMap(
-                            s -> s, // key is the word
-                            s -> 1, // value is 1
-                            Integer::sum));
-            List<Object> res = list.stream()
-                    .sorted(comparing(frequencyMap::get).reversed()) // sort by descending frequency
-                    .distinct() // take only unique values
-                    .limit(3)   // take only the first 10
-                    .collect(toList()); // put it in a returned list
-            for(int i = 0; i < 3; i++)
-            {
-                if (i != 2)
-                    System.out.print(res.get(i)+" ");
-                else
-                    System.out.print(res.get(i));
-            }
-            System.out.println();
-
-        } catch (Exception e) {
-            System.out.println("Unreadable file: " + e.toString());
-        }
-    }
-
-    public static int fibo(int n) {
-        if (n == 0)
-            return 0;
-        if (n == 1)
-            return 1;
-        return fibo(n - 1) + fibo(n - 2);
-    }
-
     public static void main(String[] args) {
-        while(true) {
-            Scanner scan = new Scanner(System.in);
+        Scanner scanner = new Scanner(System.in);
 
-            String res = scan.nextLine();
+        Fibo fibo = new Fibo();
+        Quit quit = new Quit();
+        Freq freq = new Freq();
+        List<Command> commands = new ArrayList<>();
+        commands.add(fibo);
+        commands.add(quit);
+        commands.add(freq);
 
-            if (res.equals("quit"))
-                break;
-            else if (res.equals("fibo")) {
-                System.out.println("Entrez un nombre:");
-                res = scan.nextLine();
-                int resFibo = fibo(parseInt(res));
-                System.out.println(resFibo);
+        boolean stop = false;
+        boolean runned = false;
+        do {
+            String msg = scanner.nextLine();
+            runned = false;
+            for (Command command : commands) {
+                if (command.name().equals(msg)) {
+                    stop = command.run(scanner);
+                    runned = true;
+                    break;
+                }
             }
-            else if (res.equals("freq")) {
-                System.out.println("Entrez le chemin vers un fichier:");
-                res = scan.nextLine();
-                Path path = Paths.get(res);
-                handleFreq(path);
-            }
-            else
-                System.out.println("Unknown command");
-        }
+            if (!runned)
+                System.out.println("Unknown Command");
+        } while (!stop);
     }
 }
